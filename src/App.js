@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import Confetti from 'react-confetti'
-
+import Confetti from './Confetti';
 function Square({value, onSquareClick}) {
   return (<button className="square" onClick={onSquareClick}>{value}</button>)
 }
@@ -19,9 +18,7 @@ function Board({isXNext, squares, onPlay}) {
       onPlay(nextSquares)
     }
   }
-  const winner = calculateWinner(squares)
   return (
-    <div>
     <div className ="board">
         {squares.map((square, index) => {
           return (
@@ -32,43 +29,63 @@ function Board({isXNext, squares, onPlay}) {
           )
         })}
     </div>
-    {winner && <div>
-      <Confetti
-        width={window.innerWidth}
-        height={window.innerHeight}
-      />
-      <h1>Congrats player {winner}</h1>
-    </div>}
-    </div>
-  );
-}
+)}
 export default function Game() {
   const [history, setHistory] = useState(Array(Array(9).fill(null)));
   const [isXNext, setIsXNext] = useState(true)
+  const [winner, setWinner] = useState()
   const currentSquares = history[history.length-1]
+
   function handlePlay(nextSquares) {
     setHistory([...history, nextSquares])
+    setWinner(calculateWinner(nextSquares))
     setIsXNext(!isXNext)
+
+  }
+
+  function jumpTo(move) {
+    let currentHistory = history.slice(0,move+1)
+    setHistory(currentHistory)
+  }
+  function handleRestart() {
+    setHistory(history.slice(0,1))
+    setIsXNext(true)
+    setWinner()
   }
   const moves = history.map((squares, move) => {
+    let description;
+    if (move>0) {
+      description='Move to #' + move
+    }
+    else {
+      description='Restart'
+    }
     return (
-      <button></button>
+      <li key={move}><button onClick={() => {jumpTo(move)}}>{description}</button></li>
     )
   })
+
   return (
-    <div className="game">
-      <div className="game-board">
-        <Board 
-          isXNext={isXNext}
-          squares = {currentSquares}
-          onPlay = {handlePlay}
-        />
-      </div>
-      <div className="game-info">
-        <ol>{/*TODO*/}</ol>
-      </div>
-    </div>
-  );
+    <div>
+      {(winner && 
+      <div>
+          <Confetti
+            winner={winner}
+            onRestart={handleRestart}
+          />
+    </div>) || (<div className="game">
+        <div className="game-board">
+          <Board 
+            isXNext={isXNext}
+            squares = {currentSquares}
+            onPlay = {handlePlay}
+          />
+        </div>
+        <div className="game-info">
+          <ul>{moves}</ul>
+        </div>
+      </div>)}
+    </div>)
 }
 function calculateWinner(squares) {
   const lines = [
